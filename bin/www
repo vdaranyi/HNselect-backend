@@ -14,12 +14,12 @@ var path = require('path');
  * Load SSL certificate
  */
 
-var privateKey = fs.readFileSync(path.join(__dirname, '../_config/server.key'));
-var certificate = fs.readFileSync(path.join(__dirname, '../_config/server.crt'));
-var ssl = {
-  key: privateKey,
-  cert: certificate
-};
+// var privateKey = fs.readFileSync(path.join(__dirname, '../_config/server.key'));
+// var certificate = fs.readFileSync(path.join(__dirname, '../_config/server.crt'));
+// var ssl = {
+//   key: privateKey,
+//   cert: certificate
+// };
 
 /**
  * Get port from environment and store in Express.
