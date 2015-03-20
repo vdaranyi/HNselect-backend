@@ -25,6 +25,7 @@ router.get('/:name', function(req, res, next) {
 });
 
 // updates array of who the user is following
+// Refactor into post and delete request
 router.put('/:name', function(req, res, next) {
   console.log('req.body.differentUser: ', req.body.differentUser);
   User.findOne({
