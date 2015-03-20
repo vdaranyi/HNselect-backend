@@ -1,7 +1,8 @@
 var Firebase = require('firebase'),
     request = require('request'),
     mongoose = require('mongoose'),
-    async = require('async');
+    async = require('async'),
+    Promise = require('bluebird');
 
 //For development purposes
 require('../models/index');
@@ -15,18 +16,20 @@ var c = console.log.bind(console);
 // MADE lastItemFetched global, needs to be changed to read from DB
 var lastItemFetched;
 
-lastItemFetched = 9234000;
-// Item.findOne().sort('-id').exec(function (err, maxItemInDB){
-//   if (err || !maxItemInDB) {
-// 		lastItemFetched = 9233000;
-// 	} else {
-// 		lastItemFetched = maxItemInDB.id;
-// 	}
-// }); // Need .then? before calling firebase?
+Item.findOne().sort('-id').exec(function (err, maxItemInDB){
+  if (err || !maxItemInDB) {
+		lastItemFetched = 9241070;
+	} else {
+		lastItemFetched = maxItemInDB.id;
+	}
+}); // Need .then? before calling firebase?
 
 var maxItemFb = new Firebase('https://hacker-news.firebaseio.com/v0/maxitem');
 
-
+// SOME ITEMS THAT WERE JUST CREATED RETURN NULL, TIMING ISSUE?
+// ORDER: Check for the latest item in DB, if exists, set to lastItem, call maxitem on Firebase and start fetching items,
+// If DB is empty, wait for start fetching, for example, the last 1,000 items
+// REVIEW ITEMSCHEMA
 
 mongoose.connection.on('open', function() {
 
@@ -37,159 +40,102 @@ mongoose.connection.on('open', function() {
 
       setTimeout(function(){ // NEEDED? Item seems to be not immediately available upon firebase event trigger
         var maxItem = snapshot.val();
-        var startItemNo = lastItemFetched + 1; // REVERSE CRAWLING ORDER - NO
-        c('* Start item: ',startItemNo, 'max item: ',maxItem);
+        var currentItemNo = lastItemFetched + 1; 
+        c('* Start item: ',currentItemNo, 'max item: ',maxItem);
         lastItemFetched = maxItem;
-        getNewItem(startItemNo);
+        
+        findOrFetchItem(currentItemNo)
+        .then(function(item){
+          c('DONE ', item.id);
+          currentItemNo++;
+          if (currentItemNo <= maxItem) {
+            findOrFetchItem(currentItemNo);
+          }
+        })
+        .catch(function(err){
+          c(err);
+        });
 
-        function getNewItem(itemNo, cb) {
-            var requestUrl = 'https://hacker-news.firebaseio.com/v0/item/' + itemNo + '.json';
-            request(requestUrl, function(err, response, body) {
-              if (err) c('Request Error ', err);
-              var item = JSON.parse(body) // Do I need this?
-              if (item !== null) { // Some items are null etc.
-                if (!item.deleted && !item.dead) {
-                  if (item.type === 'story') {
-                    var itemToSafe = {
-                        by: item.by,
-                        id: item.id,
-                        time: item.time,
-                        type: item.type,
-                        storyTitle: item.title,
-                        storyUrl: item.url,
-                    };
-                    // If story has kids, they will be added when we add the respective comment
-                    Item.create(item);
-                    c(itemNo, ' - Story created');
-                  } else if (item.type === 'comment') {
-                    c(itemNo, ' - Looking up comment\'s parent');
-                    findParentStory(item.parent, item).then(function(item) {
-                      
-                    })
-                  } else {
-                  	c(itemNo, ' - Not story nor comment');
-                  }
-                }
-              }
-            });
-            itemNo++;
-            if (itemNo <= maxItem) {
-              getNewItem(itemNo);
-        	}
-        }
       }, 1000);
 
 
-      function findParentStory(parentId, commentToResolve) {
+      function fetchItem(itemNo) {
         return new Promise(function(resolve, reject) {
-        Item.findOne({id: parentId}, function(err, parentItem) {
-          if (!parentItem) {
-            getNewItem(parentId)
-            {
-            if (parentItem.type === 'story') {
-              var itemToSafe = {
-                  by: commentToResolve.by,
-                  id: commentToResolve.id,
-                  time: commentToResolve.time,
-                  type: commentToResolve.type,
-                  storyTitle: parentItem.title,
-                  storyUrl: parentItem.url,
-                  storyId: parentItem.title,
-                  storyBy: parentItem.by,
-                  parent: commentToResolve.parent,
-                  kids: commentToResolve.kids,
-                  text: commentToResolve.text
-              };
-            c('PARENT story found:', commentToResolve.id);
-            } else if (parentItem.parent) {
-              findParentStory(parentItem.parent, commentToResolve);
-            }
-          } else {
-            // comments schema maps the one provided by Firebase
-            c('Comment without parent:', commentToResolve.id);
-            var itemToSafe = commentToResolve;
-            if (itemToSafe.kids) {
-              addChildrenAuthors(itemToSafe);
-            } else {
-              Item.create(itemToSafe, function(item) {
-                resolve(item);
-              }
-            }
-          }
-        });
-
-        })
-
-      }
-
-        function fetchItem(itemNo) {
-          return new Promise(function(resolve, reject) {
-            var requestUrl = 'https://hacker-news.firebaseio.com/v0/item/' + itemNo + '.json';
-            request(requestUrl, function(err, response, body) {
-              if (err) c('Request Error ', err);
-              var item = JSON.parse(body) // Do I need this?
-              if (item !== null) { // Some items are null etc.
-                if (!item.deleted && !item.dead) {
-                  if (item.type === 'story') {
-                    var itemToSafe = {
-                        by: item.by,
-                        id: item.id,
-                        time: item.time,
-                        type: item.type,
-                        storyTitle: item.title,
-                        storyUrl: item.url,
-                    };
-                    // If story has kids, they will be added when we add the respective comment
-                    Item.create(item, function(err, item) {
+          var requestUrl = 'https://hacker-news.firebaseio.com/v0/item/' + itemNo + '.json';
+          request(requestUrl, function(err, response, body) {
+            if (err) reject({itemNo: itemNo, errorType: 'Firebase request error', error: err});
+            var item = JSON.parse(body) // Do I need this?
+            if (item !== null) { // Some items are null etc.
+              if (!item.deleted && !item.dead ) {
+                if (item.type === 'story') {
+                  var itemToSafe = {
+                      by: item.by,
+                      id: item.id,
+                      time: item.time,
+                      type: item.type,
+                      storytitle: item.title,
+                      storyurl: item.url,
+                  };
+                  // console.log("ITEM", item, "SCHEMA", Item.schema);
+                  // If story has kids, they will be added when we add the respective comment
+                  Item.create(itemToSafe, function(err, item) {
+                    c(itemNo, ' - Story created', item);
+                    resolve(item);
+                  });
+                } else if (item.type === 'comment') {
+                  Item.create(item, function(err, item) {
+                    if (err) reject({itemNo: itemNo, errorType: 'Could not create item in DB', error: err})
+                    findParentStory(item.parent, item).then(function(item) {
+                      c(itemNo, ' - Comment created');
                       resolve(item);
                     });
-                    c(itemNo, ' - Story created');
-                  } else if (item.type === 'comment') {
-                    c(itemNo, ' - Looking up comment\'s parent');
-
-                    Item.create(item, function(err, item) {
-                      findParentStory2(item).then(function(item) {
-                        resolve(item);
-                      })
-                    });
-                    // findParentStory(item.parent, item).then(function(item) {
-                    // })
-                  } else {
-                    reject("Not a story or comment");
-                    c(itemNo, ' - Not story nor comment');
-                  }
+                  });
+                } else {
+                  reject({itemNo: itemNo, errorType: 'Firebased: not story nor comment item'});
                 }
+              } else {
+                reject({itemNo: itemNo, errorType: 'Firebase: deleted or dead item'});
               }
-            });
+            } else {
+              reject({itemNo: itemNo, errorType: 'Firebase: null item'});
+            }
           });
-        }
+        });
+      }
 
-      function getOrFetchItem(itemNo) {
+      function findOrFetchItem(itemNo) {
         return new Promise(function(resolve, reject) {
           Item.findOne({id: itemNo}, function(err, item) {
+            if (err) reject({itemNo: itemNo, errorType: 'DB lookup error', error: err});
             if(!item) {
-              return fetchItem(itemNo);
+              c("Didn't find item in DB", itemNo);
+              resolve(fetchItem(itemNo));
             } else {
+              c("Did find item in DB", itemNo);
               resolve(item);
             }
-          })
-        })
+          });
+        });
       }
 
 
-      function findParentStory2(comment, origComment) {
+
+      function findParentStory(parentId, origComment) {
         return new Promise(function(resolve, reject) {
-          getOrFetchItem(comment.parent).then(function(parent) {
+          findOrFetchItem(parentId).then(function(parent) {
             if(parent.type === "story") {
-              origComment.storyTitle = parent.storyTitle;
+              c("found a parent story");
+              origComment.title = parent.title;
+
+              origComment.save();
               parent.commenters.push(origComment.by);
               parent.save(function(err) {
                 resolve(origComment);              
               })
             } else {
+              c("found a parent comment, recursing");
               // parent is comment
-
-              findParentStory2(parent)
+              resolve(findParentStory(parent.parent, origComment));                            
             }
           })
         })
