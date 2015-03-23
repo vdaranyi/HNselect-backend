@@ -2,8 +2,10 @@ var Firebase = require('firebase'),
     request = require('request'),
     mongoose = require('mongoose'),
     async = require('async'),
-    Promise = require('bluebird');
+    Promise = require('bluebird'),
     db = require('../models/index');
+
+Promise.promisifyAll(mongoose); // adds 'Async' methods to mongoose that make mongoose promises compatible with bluebird
 
 // Mongoose Schemas
 var Item = require('../models/itemSchema');
@@ -38,12 +40,12 @@ var maxItemFb = new Firebase('https://hacker-news.firebaseio.com/v0/maxitem');
 // Error: Unhandled rejection Error: [object Object] line 106. Do we need a .catch for every .then?
 // Need to properly handle deleted, dead and null items
 // We cannot make concurrent item calls because then there might be overlapping item creation > How to optimize speed?
-// Correctly reject deleted: true items!!
+// Correctly reject "deleted: true" items!!
 
 mongoose.connection.on('open', function() {
 
-  mongoose.connection.db.dropDatabase(function() {
-      c("Dropped old data, now inserting data");
+  // mongoose.connection.db.dropDatabase(function() {
+  //     c("Dropped old data, now inserting data");
 
     maxItemFb.on('value', function(snapshot) {
 
@@ -56,24 +58,28 @@ mongoose.connection.on('open', function() {
         iterateOverItems();
 
         function iterateOverItems() {
-          findOrFetchItem(currentItemNo)
-          .then(function(item){
-            c('DONE ', item.id);
-            currentItemNo++;
-            if (currentItemNo <= maxItem) {
-              iterateOverItems();
-            }
-          })
-          .catch(function(err){
-            c(err);
-          });
-        }
+          // while (currentItemNo <= maxItem) {
+            findOrFetchItem(currentItemNo)
+            .then(function(item){
+              c('DONE ', item.id);
+            })
+            .catch(function(err){
+              console.error(err);
+            })
+            .finally(function() {
+              currentItemNo++;
+              if (currentItemNo <= maxItem) {
+                iterateOverItems();
+              }
+            });
+          }
 
       }, 1000);
 
 
       function fetchItem(itemNo) {
         return new Promise(function(resolve, reject) {
+          c(itemNo);
           var requestUrl = 'https://hacker-news.firebaseio.com/v0/item/' + itemNo + '.json';
           request(requestUrl, function(err, response, body) {
             if (err) reject({itemNo: itemNo, errorType: 'Firebase request error', error: err});
@@ -92,15 +98,20 @@ mongoose.connection.on('open', function() {
                   };
                   // If story has kids, they will be added when we add the respective comment
                   Item.create(itemToSafe, function(err, item) {
+                    if (err) reject({itemNo: itemNo, errorType: 'Could not create item in DB', error: err});
                     c(itemNo, ' - Story created', item);
                     resolve(item);
                   });
                 } else if (item.type === 'comment') {
                   Item.create(item, function(err, item) {
                     if (err) reject({itemNo: itemNo, errorType: 'Could not create item in DB', error: err})
-                    findParentStory(item.parent, item).then(function(item) {
+                    findParentStory(item.parent, item)
+                    .then(function(item) {
                       c(itemNo, ' - Comment created');
                       resolve(item);
+                    })
+                    .catch(function(err){
+                      reject(err);
                     });
                   });
                 } else {
@@ -116,59 +127,52 @@ mongoose.connection.on('open', function() {
         });
       }
 
-      // DOES THIS FCT REALLY TO RETURN A PROMISE?
       function findOrFetchItem(itemNo) {
-        return new Promise(function(resolve, reject) {
-          Item.findOne({id: itemNo}, function(err, item) {
-            if (err) reject({itemNo: itemNo, errorType: 'DB lookup error', error: err});
-            if(!item) {
-              c("Didn't find item in DB", itemNo);
-              // resolve(fetchItem(itemNo)); // resolve here???
-              fetchItem(itemNo).then(function(item){
-                resolve(item);
-              });
-            } else {
-              c("Did find item in DB", itemNo);
-              resolve(item);
-            }
-          });
+        return Item.findOneAsync({id: itemNo}).then(function(item){
+          if (item) {
+            c("Did find item in DB", itemNo, item);
+            return item;
+          }
+          c("Didn't find item in DB", itemNo);
+          return fetchItem(itemNo);
         });
       }
 
-
-
       function findParentStory(parentId, origComment) {
-        return new Promise(function(resolve, reject) {
-          findOrFetchItem(parentId).then(function(parent) {
+        // return new Promise(function(resolve, reject) {
+        return findOrFetchItem(parentId).then(function(parent) {
             if(parent.type === "story") {
-              c("found a parent story");
+              c("found a parent story", parent.id);
               origComment.storytitle = parent.storytitle;
               origComment.storyurl = parent.storyurl;
               origComment.storyid = parent.id;
               origComment.storyby = parent.by;
-              origComment.save();
+              var commentToSave = origComment.saveAsync();
               // Add commenters to parent, if not already part of array
               if (parent.commenters.indexOf(origComment.by) === -1) {                
                 parent.commenters.push(origComment.by);
               }
-              parent.save(function(err) {
-                resolve(origComment);              
-              })
+              var parentToSave = parent.saveAsync()
+              return Promise.all([commentToSave, parentToSave]).then(function(itemArray){
+                return itemArray[0][0];
+              });
+
             } else {
               // parent is comment
               c("found a parent comment, recursing");
               if (parent.commenters.indexOf(origComment.by) === -1) {                
                 parent.commenters.push(origComment.by);
               }
-              parent.save(function(err) {            
+              return parent.saveAsync().then(function(parent) {            
                 // resolve(findParentStory(parent.parent, origComment));
-                findParentStory(parent.parent, origComment).then(function(item){
-                  resolve(item);
+                c('PARENT:', parent);
+                return findParentStory(parent[0].parent, origComment).then(function(item){
+                  return item;
                 }); 
-              })
+              });
             }
           })
-        })
+        // })
       }
 
       // Currently not used, functionality also needs to be confirmed
@@ -194,5 +198,5 @@ mongoose.connection.on('open', function() {
     });
 
 // Mongoose closing brackets
-  });
+  // });
 });

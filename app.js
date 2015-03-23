@@ -8,7 +8,7 @@ var express = require('express'),
     app = express();
     // server = require('server');
 
-require('./firebase/firebase-data.js');
+require('./firebase/firebase.js');
 // uncomment after placing your favicon in /public
 //app.use(favicon(__dirname + '/public/favicon.ico'));
 app.use(logger('dev'));

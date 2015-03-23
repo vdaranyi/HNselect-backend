@@ -1,14 +1,14 @@
 'use strict';
 var router = require('express').Router(),
-  User = require('../models/user-model.js'),
-  Story = require('../models/story-model.js');
+  User = require('../models/userSchema.js'),
+  Item = require('../models/itemSchema.js');
 
 
 // if user does not exist, creates new user based on their Hacker News username
 // else gets the array of who the user is following
 router.get('/:name', function(req, res, next) {
   User.findOne({
-    hnUsername: req.params.name
+    id: req.params.name
   }, function(err, user) {
     if (err) return next(err);
     else if (user) res.json(user.following);
@@ -29,7 +29,7 @@ router.get('/:name', function(req, res, next) {
 router.put('/:name', function(req, res, next) {
   console.log('req.body.differentUser: ', req.body.differentUser);
   User.findOne({
-    hnUsername: req.params.name
+    id: req.params.name
   }, function(err, user) {
     if (err) return next(err);
     else {

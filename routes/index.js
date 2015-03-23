@@ -1,8 +1,8 @@
 'use strict';
 var router = require('express').Router(),
 	async = require('async'),
-  User = require('../models/user-model'),
-	Story = require('../models/story-model');
+  User = require('../models/userSchema'),
+	Item = require('../models/itemSchema');
 
 router.get('/', function(req, res, next) {
   res.send('Thanks for using Hacker News Select!');
@@ -30,6 +30,28 @@ router.post('/getCommenters', function(req, res, next) {
     else res.send(commenters);
   });
 });
+
+router.get('/:user/newsfeed', function(req, res, next){
+  User.findOne({id: req.params.user}, function(err, user){
+    console.log();
+    Item.find({by: {$in: user.following}}).sort([['id','descending']]).exec(function(err, items){
+      res.send(items);
+    });
+  });
+});
+
+router.get('/:user/notifications', function(req, res, next){
+  
+  Item.find({by: req.params.user}, 'kids', function(err, comments){
+    comments. ITERATE
+    res.send(comments);
+  });
+});
+
+
+
+
+
 
 module.exports = router;
 
