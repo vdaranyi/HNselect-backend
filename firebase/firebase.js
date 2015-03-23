@@ -3,9 +3,7 @@ var Firebase = require('firebase'),
     mongoose = require('mongoose'),
     async = require('async'),
     Promise = require('bluebird');
-
-//For development purposes
-require('../models/index');
+    db = require('../models/index');
 
 // Mongoose Schemas
 var Item = require('../models/itemSchema');
@@ -29,12 +27,23 @@ var maxItemFb = new Firebase('https://hacker-news.firebaseio.com/v0/maxitem');
 // SOME ITEMS THAT WERE JUST CREATED RETURN NULL, TIMING ISSUE?
 // ORDER: Check for the latest item in DB, if exists, set to lastItem, call maxitem on Firebase and start fetching items,
 // If DB is empty, wait for start fetching, for example, the last 1,000 items
-// REVIEW ITEMSCHEMA
+// Just call fetch upon firebase emit, as the new item is obviously not yet in the db.
+// DB doesn't get dropped upon startup.
+// Do I need all commenters of a story? Currently only adding the commenters that are parsed, when looking for parent story >> solution: include addChildrenAuthors function?
+// Don't need to wait for .then to run before getting the next item. Can be done concurrent? Line 49
+// why do I do parent.save() but not origComment.save()?
+// complete error handling
+// why does it delete the data but not reset lastItemFetched?
+// Should I add all the kids to story or just the one i added? Currently no kids are added to story.
+// Error: Unhandled rejection Error: [object Object] line 106. Do we need a .catch for every .then?
+// Need to properly handle deleted, dead and null items
+// We cannot make concurrent item calls because then there might be overlapping item creation > How to optimize speed?
+// Correctly reject deleted: true items!!
 
 mongoose.connection.on('open', function() {
 
   mongoose.connection.db.dropDatabase(function() {
-      // c("Dropped old data, now inserting data");
+      c("Dropped old data, now inserting data");
 
     maxItemFb.on('value', function(snapshot) {
 
@@ -44,17 +53,21 @@ mongoose.connection.on('open', function() {
         c('* Start item: ',currentItemNo, 'max item: ',maxItem);
         lastItemFetched = maxItem;
         
-        findOrFetchItem(currentItemNo)
-        .then(function(item){
-          c('DONE ', item.id);
-          currentItemNo++;
-          if (currentItemNo <= maxItem) {
-            findOrFetchItem(currentItemNo);
-          }
-        })
-        .catch(function(err){
-          c(err);
-        });
+        iterateOverItems();
+
+        function iterateOverItems() {
+          findOrFetchItem(currentItemNo)
+          .then(function(item){
+            c('DONE ', item.id);
+            currentItemNo++;
+            if (currentItemNo <= maxItem) {
+              iterateOverItems();
+            }
+          })
+          .catch(function(err){
+            c(err);
+          });
+        }
 
       }, 1000);
 
@@ -75,8 +88,8 @@ mongoose.connection.on('open', function() {
                       type: item.type,
                       storytitle: item.title,
                       storyurl: item.url,
+                      kids: item.kids
                   };
-                  // console.log("ITEM", item, "SCHEMA", Item.schema);
                   // If story has kids, they will be added when we add the respective comment
                   Item.create(itemToSafe, function(err, item) {
                     c(itemNo, ' - Story created', item);
@@ -103,13 +116,17 @@ mongoose.connection.on('open', function() {
         });
       }
 
+      // DOES THIS FCT REALLY TO RETURN A PROMISE?
       function findOrFetchItem(itemNo) {
         return new Promise(function(resolve, reject) {
           Item.findOne({id: itemNo}, function(err, item) {
             if (err) reject({itemNo: itemNo, errorType: 'DB lookup error', error: err});
             if(!item) {
               c("Didn't find item in DB", itemNo);
-              resolve(fetchItem(itemNo));
+              // resolve(fetchItem(itemNo)); // resolve here???
+              fetchItem(itemNo).then(function(item){
+                resolve(item);
+              });
             } else {
               c("Did find item in DB", itemNo);
               resolve(item);
@@ -125,25 +142,40 @@ mongoose.connection.on('open', function() {
           findOrFetchItem(parentId).then(function(parent) {
             if(parent.type === "story") {
               c("found a parent story");
-              origComment.title = parent.title;
-
+              origComment.storytitle = parent.storytitle;
+              origComment.storyurl = parent.storyurl;
+              origComment.storyid = parent.id;
+              origComment.storyby = parent.by;
               origComment.save();
-              parent.commenters.push(origComment.by);
+              // Add commenters to parent, if not already part of array
+              if (parent.commenters.indexOf(origComment.by) === -1) {                
+                parent.commenters.push(origComment.by);
+              }
               parent.save(function(err) {
                 resolve(origComment);              
               })
             } else {
-              c("found a parent comment, recursing");
               // parent is comment
-              resolve(findParentStory(parent.parent, origComment));                            
+              c("found a parent comment, recursing");
+              if (parent.commenters.indexOf(origComment.by) === -1) {                
+                parent.commenters.push(origComment.by);
+              }
+              parent.save(function(err) {            
+                // resolve(findParentStory(parent.parent, origComment));
+                findParentStory(parent.parent, origComment).then(function(item){
+                  resolve(item);
+                }); 
+              })
             }
           })
         })
       }
 
+      // Currently not used, functionality also needs to be confirmed
+      /* 
       function addChildrenAuthors(itemToSafe){
         kidsArray = itemToSafe.kids;
-        c('addChildenAuthors hit', kidsArray);
+        c('addChildrenAuthors hit', kidsArray);
         Item.find()
         .where('id')
         .in(kidsArray)
@@ -156,7 +188,7 @@ mongoose.connection.on('open', function() {
           c(itemToSafe.id, ' - Comment created with commenters ', kidsAuthors);
         });
       };
-
+      */
 
     // Firebase.on closing brackets
     });

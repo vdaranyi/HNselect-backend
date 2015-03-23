@@ -3,8 +3,9 @@ var mongoose = require('mongoose');
 
 var itemSchema = new mongoose.Schema({
   // Not saving all fields
+  createdAt: { type: Date, expires: '3d', default: Date.now}, // Data expires after 3 days
   by: {type: String, index: true}, // author
-  id: {type: Number, index: true}, // item no
+  id: {type: Number, index: true, unique: true}, // item no
   time: Number, // unix timestamp
   type: String, // comment or story
   storytitle: String, // title of story or title of story that comment relates to
