@@ -33,7 +33,7 @@ router.post('/getCommenters', function(req, res, next) {
 
 router.get('/:user/newsfeed', function(req, res, next){
   User.findOne({id: req.params.user}, function(err, user){
-    console.log();
+    console.log(err, user);
     Item.find({by: {$in: user.following}}).sort([['id','descending']]).exec(function(err, items){
       res.send(items);
     });
