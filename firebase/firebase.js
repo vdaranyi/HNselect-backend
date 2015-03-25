@@ -76,6 +76,7 @@ mongoose.connection.on('open', function() {
 
       }, 1000);
 
+      // ERROR MSG: TypeError: Cannot read property 'deleted' of null
 
       function fetchItem(itemNo) {
         return new Promise(function(resolve, reject) {
@@ -83,8 +84,9 @@ mongoose.connection.on('open', function() {
           var requestUrl = 'https://hacker-news.firebaseio.com/v0/item/' + itemNo + '.json';
           request(requestUrl, function(err, response, body) {
             if (err) reject({itemNo: itemNo, errorType: 'Firebase request error', error: err});
-            var item = JSON.parse(body) // Do I need this?
-            if (item !== null) { // Some items are null etc.
+            c('body is:',body, typeof body);
+            if (body && body !== 'null') { // Some items are null etc.
+              var item = JSON.parse(body) // Do I need this?
               if (!item.deleted && !item.dead ) {
                 if (item.type === 'story') {
                   var itemToSafe = {
