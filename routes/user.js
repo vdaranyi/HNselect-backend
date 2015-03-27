@@ -26,26 +26,22 @@ router.get('/:user/newsfeed', function(req, res, next){
     }); 
 });
 
-router.get('/:user/highlight', function(req, res, next){
+router.post('/:user/highlight', function(req, res, next){
   var following = req.user.following,
-      // storyIds = req.body.data;
-      // DEV only:
-      storyIds = [9269660],
-      storiesToHighlight = [];
+      storyIds = req.body,
+      storiesToHighlight = {};
     Item.find({id: {$in: storyIds}}, 'id by commenters -_id').exec(function(err, stories){
-      console.log(stories);
-
       for (var i = 0; i < stories.length; i++) {
         var commentersFollowing = _.intersection(stories[i].commenters,following);
         var authorFollowing = _.intersection([stories[i].by],following);
-        if (commentersFollowing !== [] || authorFollowing !== []) {
-          storiesToHighlight.push({
-            id: stories[i].id,
+        if (commentersFollowing.length || authorFollowing.length) {
+          storiesToHighlight[stories[i].id] = {
             author: authorFollowing,
             commenters: commentersFollowing
-          }); 
+          }; 
         }
       }
+      console.log('STORIES:',storiesToHighlight)
       res.send(storiesToHighlight);
     });
 });
