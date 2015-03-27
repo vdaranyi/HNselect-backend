@@ -46,4 +46,11 @@ router.post('/:user/highlight', function(req, res, next){
     });
 });
 
+router.get('/:user/userdata', function(req, res, next){
+  var user = req.user;
+  res.send(user);
+});
+
+
+
 module.exports = router;

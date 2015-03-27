@@ -45,14 +45,14 @@ var maxItemFb = new Firebase('https://hacker-news.firebaseio.com/v0/maxitem');
 mongoose.connection.on('open', function() {
 
   // mongoose.connection.db.dropDatabase(function() {
-  //     c("Dropped old data, now inserting data");
+  //     // c("Dropped old data, now inserting data");
 
     maxItemFb.on('value', function(snapshot) {
 
       setTimeout(function(){ // NEEDED? Item seems to be not immediately available upon firebase event trigger
         var maxItem = snapshot.val();
         var currentItemNo = lastItemFetched + 1; 
-        c('* Start item: ',currentItemNo, 'max item: ',maxItem);
+        // c('* Start item: ',currentItemNo, 'max item: ',maxItem);
         lastItemFetched = maxItem;
         
         iterateOverItems();
@@ -74,17 +74,17 @@ mongoose.connection.on('open', function() {
             });
           }
 
-      }, 1000);
+      }, 10000);
 
       // ERROR MSG: TypeError: Cannot read property 'deleted' of null
 
       function fetchItem(itemNo) {
         return new Promise(function(resolve, reject) {
-          c(itemNo);
+          // c(itemNo);
           var requestUrl = 'https://hacker-news.firebaseio.com/v0/item/' + itemNo + '.json';
           request(requestUrl, function(err, response, body) {
             if (err) reject({itemNo: itemNo, errorType: 'Firebase request error', error: err});
-            c('body is:',body, typeof body);
+            // c('body is:',body, typeof body);
             if (body && body !== 'null') { // Some items are null etc.
               var item = JSON.parse(body) // Do I need this?
               if (!item.deleted && !item.dead ) {
@@ -101,7 +101,7 @@ mongoose.connection.on('open', function() {
                   // If story has kids, they will be added when we add the respective comment
                   Item.create(itemToSafe, function(err, item) {
                     if (err) reject({itemNo: itemNo, errorType: 'Could not create item in DB', error: err});
-                    c(itemNo, ' - Story created', item);
+                    // c(itemNo, ' - Story created', item);
                     resolve(item);
                   });
                 } else if (item.type === 'comment') {
@@ -109,7 +109,7 @@ mongoose.connection.on('open', function() {
                     if (err) reject({itemNo: itemNo, errorType: 'Could not create item in DB', error: err})
                     findParentStory(item.parent, item)
                     .then(function(item) {
-                      c(itemNo, ' - Comment created');
+                      // c(itemNo, ' - Comment created');
                       resolve(item);
                     })
                     .catch(function(err){
@@ -132,10 +132,10 @@ mongoose.connection.on('open', function() {
       function findOrFetchItem(itemNo) {
         return Item.findOneAsync({id: itemNo}).then(function(item){
           if (item) {
-            c("Did find item in DB", itemNo, item);
+            // c("Did find item in DB", itemNo, item);
             return item;
           }
-          c("Didn't find item in DB", itemNo);
+          // c("Didn't find item in DB", itemNo);
           return fetchItem(itemNo);
         });
       }
@@ -144,7 +144,7 @@ mongoose.connection.on('open', function() {
         // return new Promise(function(resolve, reject) {
         return findOrFetchItem(parentId).then(function(parent) {
             if(parent.type === "story") {
-              c("found a parent story", parent.id);
+              // c("found a parent story", parent.id);
               origComment.storytitle = parent.storytitle;
               origComment.storyurl = parent.storyurl;
               origComment.storyid = parent.id;
@@ -161,13 +161,13 @@ mongoose.connection.on('open', function() {
 
             } else {
               // parent is comment
-              c("found a parent comment, recursing");
+              // c("found a parent comment, recursing");
               if (parent.commenters.indexOf(origComment.by) === -1) {                
                 parent.commenters.push(origComment.by);
               }
               return parent.saveAsync().then(function(parent) {            
                 // resolve(findParentStory(parent.parent, origComment));
-                c('PARENT:', parent);
+                // c('PARENT:', parent);
                 return findParentStory(parent[0].parent, origComment).then(function(item){
                   return item;
                 }); 
@@ -181,17 +181,17 @@ mongoose.connection.on('open', function() {
       /* 
       function addChildrenAuthors(itemToSafe){
         kidsArray = itemToSafe.kids;
-        c('addChildrenAuthors hit', kidsArray);
+        // c('addChildrenAuthors hit', kidsArray);
         Item.find()
         .where('id')
         .in(kidsArray)
         .select('by')
         .exec(function(err, kidsAuthors){
-          if (err) c('ERROR',err);
-          c('kidsAuthors',kidsAuthors);
+          if (err) // c('ERROR',err);
+          // c('kidsAuthors',kidsAuthors);
           itemToSafe.commenters = kidsAuthors;
           Item.create(itemToSafe);
-          c(itemToSafe.id, ' - Comment created with commenters ', kidsAuthors);
+          // c(itemToSafe.id, ' - Comment created with commenters ', kidsAuthors);
         });
       };
       */
