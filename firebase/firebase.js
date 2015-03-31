@@ -3,7 +3,9 @@ var Firebase = require('firebase'),
     mongoose = require('mongoose'),
     async = require('async'),
     Promise = require('bluebird'),
-    db = require('../models/index');
+    db = require('../models/index'),
+    // Use better library to retrieve open-graph data (fb?) 
+    og = require('open-graph');
 
 Promise.promisifyAll(mongoose); // adds 'Async' methods to mongoose that make mongoose promises compatible with bluebird
 
@@ -98,11 +100,16 @@ mongoose.connection.on('open', function() {
                       storyurl: item.url,
                       kids: item.kids
                   };
-                  // If story has kids, they will be added when we add the respective comment
-                  Item.create(itemToSafe, function(err, item) {
-                    if (err) reject({itemNo: itemNo, errorType: 'Could not create item in DB', error: err});
-                    // c(itemNo, ' - Story created', item);
-                    resolve(item);
+                  getOpenGraph(item.url)
+                  .then(function(metadata){
+                    itemToSafe.text = metadata.description;
+                    // If story has kids, they will be added when we add the respective comment
+                    Item.create(itemToSafe, function(err, item) {
+                      // console.log(itemToSafe);
+                      if (err) reject({itemNo: itemNo, errorType: 'Could not create item in DB', error: err});
+                      // c(itemNo, ' - Story created', item);
+                      resolve(item);
+                    });
                   });
                 } else if (item.type === 'comment') {
                   Item.create(item, function(err, item) {
@@ -117,13 +124,13 @@ mongoose.connection.on('open', function() {
                     });
                   });
                 } else {
-                  reject({itemNo: itemNo, errorType: 'Firebased: not story nor comment item'});
+                  reject({itemNo: itemNo, errorType: 'Firebase: not a story nor comment item'});
                 }
               } else {
                 reject({itemNo: itemNo, errorType: 'Firebase: deleted or dead item'});
               }
             } else {
-              reject({itemNo: itemNo, errorType: 'Firebase: null item'});
+              reject({itemNo: itemNo, errorType: 'Firebase: NULL item - timing?'});
             }
           });
         });
@@ -175,6 +182,25 @@ mongoose.connection.on('open', function() {
             }
           })
         // })
+      }
+
+      function getOpenGraph(url) {
+        return new Promise (function(resolve, reject){
+          if (url) {
+            og(url, function(err, meta){
+              if (err) {
+                console.log('Error fetching open graph data: ',err);
+                var meta = {description: 'undefined'};
+              }
+              resolve(meta);
+            });
+          } else {
+            console.log('Error fetching open graph data: not a url');
+            var meta = {description: 'undefined'};
+            resolve(meta);
+          }
+          
+        });
       }
 
       // Currently not used, functionality also needs to be confirmed

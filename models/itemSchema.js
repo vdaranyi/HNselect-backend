@@ -14,7 +14,7 @@ var itemSchema = new mongoose.Schema({
   storyby: String, // if comment, byId of creator of story 
   parent: Number, // direct parent
   kids: [Number], // direct kids
-  text: String, // text of comment (null if type is story)
+  text: String, // text of comment, description of story if retrieved through open-graph
   commenters: [String] // username (by) of all commenters
 });
 
