@@ -19,6 +19,7 @@ router.param('user', function(req, res, next){
   });
 });
 
+
 router.get('/:user/newsfeed', function(req, res, next){
   var user = req.user;
     Item.find({by: {$in: user.following}}).sort([['id','descending']]).exec(function(err, newsfeed){
@@ -45,7 +46,7 @@ router.post('/:user/highlight', function(req, res, next){
           storiesToHighlight[stories[i].id] = {
             author: authorFollowing,
             commenters: commentersFollowing
-          }; 
+          };
         }
       }
       console.log('STORIES:',storiesToHighlight)
@@ -57,6 +58,19 @@ router.get('/:user/userdata', function(req, res, next){
   var user = req.user;
   res.send(user);
 });
+
+router.post('/:user/followuser/:followUser', function(req, res, next){
+    var user = req.user,
+        followUser = req.params.followUser;
+
+    User.findById(user).exec(function(err, user) {
+        user.following.push(followUser);
+        console.log(user.following);
+        user.save(function(err){
+            res.send('User added');
+        })
+    });
+})
 
 
 
