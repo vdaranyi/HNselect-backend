@@ -22,7 +22,14 @@ router.param('user', function(req, res, next){
 router.get('/:user/newsfeed', function(req, res, next){
   var user = req.user;
     Item.find({by: {$in: user.following}}).sort([['id','descending']]).exec(function(err, newsfeed){
-      res.send(newsfeed);
+      Item.findOne({}).sort('-id').exec(function(err, lastItem){
+        var newsfeedObj = {
+          newsfeed: newsfeed,
+          lastItem: lastItem.id,
+          following: user.following
+        };
+        res.send(newsfeedObj);
+      })
     }); 
 });
 
