@@ -100,9 +100,9 @@ mongoose.connection.on('open', function() {
                       storyurl: item.url,
                       kids: item.kids
                   };
-                  getOpenGraph(item.url)
-                  .then(function(metadata){
-                    itemToSafe.text = metadata.description;
+                  // getOpenGraph(item.url)
+                  // .then(function(metadata){
+                  //   itemToSafe.text = metadata.description;
                     // If story has kids, they will be added when we add the respective comment
                     Item.create(itemToSafe, function(err, item) {
                       // console.log(itemToSafe);
@@ -110,7 +110,7 @@ mongoose.connection.on('open', function() {
                       // c(itemNo, ' - Story created', item);
                       resolve(item);
                     });
-                  });
+                  // });
                 } else if (item.type === 'comment') {
                   Item.create(item, function(err, item) {
                     if (err) reject({itemNo: itemNo, errorType: 'Could not create item in DB', error: err})
