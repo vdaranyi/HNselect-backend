@@ -62,16 +62,31 @@ router.get('/:user/userdata', function(req, res, next){
 router.post('/:user/followuser/:followUser', function(req, res, next){
     var user = req.user,
         followUser = req.params.followUser;
-
     User.findById(user).exec(function(err, user) {
-        user.following.push(followUser);
-        console.log(user.following);
-        user.save(function(err){
+        if (user.following.indexOf(followUser) === -1) {
+          user.following.push(followUser);
+          user.save(function(err){
             res.send('User added');
-        })
+          });
+        } else {
+          res.send('Already following user');
+        }
     });
-})
+});
 
-
+router.post('/:user/bookmark/:storyid', function(req, res, next){
+    var user = req.user,
+        storyId = req.params.storyid;
+    User.findById(user).exec(function(err, user) {
+        if (user.bookmarks.indexOf(storyId) === -1) {
+          user.bookmarks.push(storyId);
+          user.save(function(err){
+            res.send('Story added');
+          });
+        } else {
+          res.send('Already bookmarked story');
+        }
+    });
+});
 
 module.exports = router;
