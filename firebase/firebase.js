@@ -114,14 +114,18 @@ mongoose.connection.on('open', function() {
                 } else if (item.type === 'comment') {
                   Item.create(item, function(err, item) {
                     if (err) reject({itemNo: itemNo, errorType: 'Could not create item in DB', error: err})
-                    findParentStory(item.parent, item)
-                    .then(function(item) {
-                      // c(itemNo, ' - Comment created');
-                      resolve(item);
-                    })
-                    .catch(function(err){
-                      reject(err);
-                    });
+                    if ('parent' in item) {
+                      findParentStory(item.parent, item)
+                      .then(function(item) {
+                        // c(itemNo, ' - Comment created');
+                        resolve(item);
+                      })
+                      .catch(function(err){
+                        reject(err);
+                      });
+                    } else {
+                      reject({itemNo: itemNo, errorType: 'Item does not have a parent'});
+                    }
                   });
                 } else {
                   reject({itemNo: itemNo, errorType: 'Firebase: not a story nor comment item'});
@@ -130,7 +134,7 @@ mongoose.connection.on('open', function() {
                 reject({itemNo: itemNo, errorType: 'Firebase: deleted or dead item'});
               }
             } else {
-              reject({itemNo: itemNo, errorType: 'Firebase: NULL item - timing?'});
+              reject({itemNo: itemNo, errorType: 'Firebase: NULL item - timing!!!'});
             }
           });
         });
