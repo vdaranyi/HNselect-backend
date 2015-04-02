@@ -13,7 +13,8 @@ var userSchema = new mongoose.Schema({
   	tokenSecret: String,
   	id: String,
   	handle: String
-  }
+  },
+  loggedin: Boolean
 });
 
 module.exports = mongoose.model('User', userSchema);
