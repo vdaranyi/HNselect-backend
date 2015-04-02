@@ -1,4 +1,5 @@
 var router = require('express').Router(),
+passport = require('passport')
     _ = require('lodash');
     User = require('../models/userSchema'),
     Item = require('../models/itemSchema');
@@ -88,5 +89,28 @@ router.post('/:user/bookmark/:storyid', function(req, res, next){
         }
     });
 });
+
+// if the user requests a login through twitter
+// execute passport's twitter strategy
+router.get('/:hn/connect/twitter', 
+  function(req,res,next) {
+    res.cookie('hn',req.params.hn);
+    next();
+  },
+  passport.authorize('twitter-authz', {failureRedirect: '/account' }));
+  
+// if twitter sends us an authenticated user
+// execute passport's twitter strategy
+// afterwards, redirect to root
+router.get('/connect/twitter/callback', 
+  passport.authorize('twitter-authz', {failureRedirect: '/account' }), 
+  function (req, res) {
+    var user = req.user;
+    var account = req.account;
+    console.log(account);
+
+  res.redirect('/');
+});
+
 
 module.exports = router;

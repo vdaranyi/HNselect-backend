@@ -5,8 +5,15 @@ var express = require('express'),
     logger = require('morgan'),
     cookieParser = require('cookie-parser'),
     bodyParser = require('body-parser'),
-    app = express();
+    app = express(),
+    session = require('express-session'),
+    passport = require('passport'),
+    // our own custom passport setup happens here
+    // passport = require('./models/twitterPassport')(require('passport')),
+    User = require('./models/userSchema'),
+    config = require('./config');
     // server = require('server');
+
 
 require('./firebase/firebase.js');
 
@@ -20,7 +27,21 @@ app.use(bodyParser.urlencoded({
   extended: false
 }));
 
+// allows us to associate a client/user combo with a session
+// thus the user does not have to actively login every time
+// they wish to access something requiring authentication
 app.use(cookieParser());
+app.use(session({
+  secret: 'zekeisthesingularity'
+}));
+
+require('./models/twitterPassport').setup(User, config);
+// passport setup---this happens every request
+app.use(passport.initialize());
+// passport manages its own sessions by piggybacking off of
+// the existing req.session that express-session makes
+app.use(passport.session());
+
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/', require('./routes/index'));
 app.use('/user', require('./routes/user'));
