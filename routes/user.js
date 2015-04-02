@@ -89,7 +89,7 @@ router.post('/:user/bookmark/:storyid', function(req, res, next){
         }
     });
 });
-
+/*
 // if the user requests a login through twitter
 // execute passport's twitter strategy
 router.get('/:hn/connect/twitter', 
@@ -104,6 +104,7 @@ router.get('/:hn/connect/twitter',
 // afterwards, redirect to root
 router.get('/connect/twitter/callback', 
   passport.authorize('twitter-authz', {failureRedirect: '/account' }), 
+  getFollowing()
   function (req, res) {
     var user = req.user;
     var account = req.account;
@@ -111,6 +112,30 @@ router.get('/connect/twitter/callback',
 
   res.redirect('/');
 });
+*/
 
+/*
+function getFollowing(hnUser) {
+  var handle = req.query.handle;
+  // using our user-specific twitter client
+  // get the tweets of the specified handle (should be placed in the query string)
+  req.user.client.get('statuses/user_timeline', {
+    screen_name: handle
+  }, function (err, tweets) {
+    if (err) return next(err);
+    var leanTweets = tweets.map(function (tweet) {
+      // extract relevant info
+      return {
+        name: tweet.user.name,
+        handle: tweet.user.screen_name,
+        text: tweet.text,
+        date: tweet.created_at,
+        imageUrl: tweet.user.profile_image_url
+      };
+    });
+    res.json(leanTweets);
+  });
+}
+*/
 
 module.exports = router;

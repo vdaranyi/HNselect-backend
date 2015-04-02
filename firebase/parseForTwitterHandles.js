@@ -20,7 +20,7 @@ function parseForTwitter() {
         maxUsers = users.length;
     fetchItem(users[0]);
 
-    function fetchItem(user, i) {
+    function fetchItem(user) {
       setTimeout(function(){
         if (user) {
           var requestUrl = 'https://hacker-news.firebaseio.com/v0/user/' + user + '.json';
@@ -37,28 +37,49 @@ function parseForTwitter() {
                 temp = temp.concat(about.match(/twitter\/(\w+)/g));
               if (about.match(/twitter.com\/(\w+)/g))
                 temp = temp.concat(about.match(/twitter.com\/(\w+)/g));
-              if (temp.length && temp[0] !== null) {
-                if (temp.length === 1) {
-                  // Finish RegEx
-                  // temp.replace(/[twitter.com\/|twitter\/|@| @|>@|(@]/,'');
-                  twitter[user] = temp[0];
-                } else {
-                  twitter[user] = temp;
-                }
-                // User.find({id: user}).exec(function(err,userObj){
-
-                // });
+              if (temp.length && temp[0]) {
+                cleanUpHandle(userId, temp);
               }
-              // console.log(userId, ' // ', temp ,' // ', about);
-              if (i === maxUsers - 1) console.log('DONE: ',twitter);
             }
           });
         }
         if (u < maxUsers) {
           u++;
-          fetchItem(users[u], u); 
+          fetchItem(users[u]); 
         }
       }, 0);
+    }
+  });
+}
+
+// Goes throuhgh the array fo potential handles (temp), cleanes handles up, removes duplicates and saves as string
+function cleanUpHandle(hnUser, temp) {
+  var i = 0;
+  while (i < temp.length) {
+    temp[i] = temp[i].replace('twitter.com\/','').replace('twitter\/','').replace(' @','').replace('>@','').replace('(@','').replace('@','');
+    if (i > 0 && temp[i] === temp[i-1]) {
+      temp.shift();
+    } else {
+      i++;
+    }
+  }
+  if (temp.length) {
+    temp = temp.join(', ')
+    addTwitterHandleToDB(hnUser, temp);
+    console.log(hnUser, '*', temp, '*');
+  }
+}
+
+function addTwitterHandleToDB(hnUser, twitterHandle) {
+  // twitterHandle is string that can include more than one handle
+  User.findOne({id: hnUser}).exec(function(err, user){
+    if (user) {
+      if (twitter.username) {
+        user.twitter.username = twitterHandle;
+        user.save();
+      }
+    } else {
+      User.create({id: hnUser, twitter: {username: twitterHandle}, loggedin: false});
     }
   });
 }

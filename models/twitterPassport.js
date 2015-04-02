@@ -29,6 +29,7 @@ exports.setup = function (User) {
 		callbackUrl: config.twitter.callbackUrl,
 		passReqToCallback: true
 	}, function (req, token, tokenSecret, profile, done) {
+		// try to replace with req.user
 		var hnUserId = req.cookies.hn;
 		console.log('cookie: ',profile);
 		// when the twitter data comes back
@@ -43,6 +44,8 @@ exports.setup = function (User) {
 				user.twitter.username = profile.username;
 				user.twitter.id = profile.id;
 				user.twitter.photo = profile.photos[0].value;
+				user.twitter.token = token;
+				user.twitter.tokenSecret = tokenSecret;
 				user.save(function(err){
 					done(null, user);
 				});
