@@ -50,7 +50,6 @@ router.post('/:user/highlight', function(req, res, next){
           };
         }
       }
-      console.log('STORIES:',storiesToHighlight)
       res.send(storiesToHighlight);
     });
 });
