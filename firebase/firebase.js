@@ -63,7 +63,7 @@ mongoose.connection.on('open', function() {
           // while (currentItemNo <= maxItem) {
             findOrFetchItem(currentItemNo)
             .then(function(item){
-              c('DONE ', item.id);
+              //c('DONE ', item.id);
             })
             .catch(function(err){
               console.error(err);
