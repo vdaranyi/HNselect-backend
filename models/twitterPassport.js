@@ -10,7 +10,7 @@ Promise.promisifyAll(mongoose);
 var TwitterStrategy = require('passport-twitter').Strategy;
 var passport = require('passport')
 // var User = require('./models/model'),
-	config = require('../config');
+	config = require('../env/index');
 
 exports.setup = function (User) {
 	// // when a new user logs in, attach them
@@ -36,7 +36,7 @@ exports.setup = function (User) {
 	}, function (req, token, tokenSecret, twProfile, done) {
 		// try to replace with req.user
 		var hnUserId = req.cookies.user;
-
+		console.log(req.user);
 		// find an existing user from the database
 		User.findOne({id: hnUserId}, function (err, user) {
 			if (err) done(err);

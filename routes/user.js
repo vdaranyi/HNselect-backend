@@ -69,18 +69,35 @@ router.get('/:user/userdata', function(req, res, next){
 });
 
 router.post('/:user/followuser/:followUser', function(req, res, next){
+// previous merge conflict
     var user = req.user,
         followUser = req.params.followUser;
     User.findById(user).exec(function(err, user) {
         if (user.following.indexOf(followUser) === -1) {
-          user.following.push(followUser);
-          user.save(function(err){
-            User.find
-            res.send('User added');
-          });
+            user.following.push(followUser);
+            user.save(function(err){
+                res.send('User added');
+            });
         } else {
-          res.send('Already following user');
+            res.send('Already following user');
         }
+    });
+});
+
+router.delete('/:user/unfollowuser', function(req, res, next){
+    var user = req.user,
+        unfollowUser = req.body;
+    User.findById(user).exec(function(err, user) {
+        for (var i=0; i<unfollowUser.length; i++) {
+            var followingIndex = user.following.indexOf(unfollowUser[i]);
+            if (followingIndex !== -1) {
+                user.following.splice(followingIndex, 1);
+
+            }
+        }
+        user.save(function (err) {
+            res.send('User unfollowed');
+        });
     });
 });
 
