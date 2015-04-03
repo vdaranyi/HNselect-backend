@@ -63,7 +63,7 @@ mongoose.connection.on('open', function() {
           // while (currentItemNo <= maxItem) {
             findOrFetchItem(currentItemNo)
             .then(function(item){
-              c('DONE ', item.id);
+              //c('DONE ', item.id);
             })
             .catch(function(err){
               console.error(err);
@@ -113,7 +113,7 @@ mongoose.connection.on('open', function() {
                   // });
                 } else if (item.type === 'comment') {
                   Item.create(item, function(err, item) {
-                    if (err) reject({itemNo: itemNo, errorType: 'Could not create item in DB', error: err})
+                    if (err || !item) reject({itemNo: itemNo, errorType: 'Could not create item in DB', error: err})
                     if ('parent' in item) {
                       findParentStory(item.parent, item)
                       .then(function(item) {
