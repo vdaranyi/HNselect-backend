@@ -40,8 +40,9 @@ router.get('/:user/bookmarks', function(req, res, next){
     var bookmarks = user.bookmarks;
     console.log(bookmarks);
     res.send(bookmarks);
-
 });
+
+
 
 router.post('/:user/highlight', function(req, res, next){
   var following = req.user.following,
