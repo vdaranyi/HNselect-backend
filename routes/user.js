@@ -35,6 +35,14 @@ router.get('/:user/newsfeed', function(req, res, next){
     }); 
 });
 
+router.get('/:user/bookmarks', function(req, res, next){
+  var user = req.user;
+    var bookmarks = user.bookmarks;
+    console.log(bookmarks);
+    res.send(bookmarks);
+
+});
+
 router.post('/:user/highlight', function(req, res, next){
   var following = req.user.following,
       storyIds = req.body,
@@ -65,12 +73,12 @@ router.post('/:user/followuser/:followUser', function(req, res, next){
         followUser = req.params.followUser;
     User.findById(user).exec(function(err, user) {
         if (user.following.indexOf(followUser) === -1) {
-          user.following.push(followUser);
-          user.save(function(err){
-            res.send('User added');
-          });
+            user.following.push(followUser);
+            user.save(function(err){
+                res.send('User added');
+            });
         } else {
-          res.send('Already following user');
+            res.send('Already following user');
         }
     });
 });
@@ -95,7 +103,7 @@ router.delete('/:user/unfollowuser', function(req, res, next){
 router.post('/:user/bookmark/:storyid', function(req, res, next){
     var user = req.user,
         storyId = req.params.storyid;
-    User.findById(user).exec(function(err, user) {
+    User.find({id: user}).exec(function(err, user) {
         if (user.bookmarks.indexOf(storyId) === -1) {
           user.bookmarks.push(storyId);
           user.save(function(err){
