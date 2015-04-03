@@ -11,7 +11,7 @@ var express = require('express'),
     // our own custom passport setup happens here
     // passport = require('./models/twitterPassport')(require('passport')),
     User = require('./models/userSchema'),
-    config = require('./config');
+    config = require('./env/index');
     // server = require('server');
 
 
