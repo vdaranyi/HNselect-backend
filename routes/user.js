@@ -58,7 +58,6 @@ router.post('/:user/highlight', function(req, res, next){
           };
         }
       }
-      console.log('STORIES:',storiesToHighlight)
       res.send(storiesToHighlight);
     });
 });
@@ -69,6 +68,7 @@ router.get('/:user/userdata', function(req, res, next){
 });
 
 router.post('/:user/followuser/:followUser', function(req, res, next){
+// previous merge conflict
     var user = req.user,
         followUser = req.params.followUser;
     User.findById(user).exec(function(err, user) {
@@ -117,12 +117,12 @@ router.post('/:user/bookmark/:storyid', function(req, res, next){
 
 // if the user requests a login through twitter
 // execute passport's twitter strategy
-router.get('/:hn/twitter/connect', 
-  // function(req,res,next) {
-  //   // do we need a cookie here, should be doable with req.user
-  //   res.cookie('hn',req.params.hn);
-  //   // next();
-  // },
+router.get('/:user/twitter/connect', 
+  function(req,res,next) {
+    // do we need a cookie here, should be doable with req.user
+    res.cookie('user',req.params.user);
+    next();
+  },
   passport.authorize('twitter-authz', {failureRedirect: '/account' }));
   
 // if twitter sends us an authenticated user

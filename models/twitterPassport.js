@@ -1,5 +1,12 @@
 // there's already a passport sub-library that'll help us
 // do OAuth with twitter
+var qs = require('querystring'),
+	request = require('request'),
+	Promise = require('bluebird'),
+	mongoose = require('mongoose');
+
+Promise.promisifyAll(mongoose); 
+
 var TwitterStrategy = require('passport-twitter').Strategy;
 var passport = require('passport')
 // var User = require('./models/model'),
@@ -24,32 +31,90 @@ exports.setup = function (User) {
 	passport.use('twitter-authz', new TwitterStrategy({
 		consumerKey: config.twitter.consumerKey,
 		consumerSecret: config.twitter.consumerSecret,
-		callbackUrl: config.twitter.callbackUrl,
+		callbackURL: config.twitter.callbackUrl,
 		passReqToCallback: true
-	}, function (req, token, tokenSecret, profile, done) {
+	}, function (req, token, tokenSecret, twProfile, done) {
 		// try to replace with req.user
-		var hnUserId = req.user;
-		console.log('hnUserId: ',hnUserId);
-		// when the twitter data comes back
-		// we'll always call `done` so that passport knows
-		// to go on, and what user data to serialize
+		var hnUserId = req.cookies.user;
+
+		// find an existing user from the database
 		User.findOne({id: hnUserId}, function (err, user) {
 			if (err) done(err);
-			// find an existing user from the database
-			else if (user.twitter.username) done(null, user);
-			else {
-				// adjust userSchema!
-				user.twitter.username = profile.username;
-				user.twitter.id = profile.id;
-				user.twitter.photo = profile.photos[0].value;
-				user.twitter.token = token;
-				user.twitter.tokenSecret = tokenSecret;
-				user.save(function(err){
-					done(null, user);
+			if (false) { // TO REVIEW LOGIC user.twitter.token
+				done(null, user);
+			} else {
+				oauth = { 
+	              consumer_key    : config.twitter.consumerKey, 
+	              consumer_secret : config.twitter.consumerSecret, 
+	              token           : token, 
+	              token_secret    : tokenSecret
+	            }
+				getTwitterFollowing(twProfile.username, oauth)
+				.then(function(suggestedTwFollowing){
+					// add twitter profile to userSchema
+					user.twitter.username = twProfile.username;
+					user.twitter.id = twProfile.id;
+					user.twitter.photo = twProfile.photos[0].value;
+					user.twitter.token = token;
+					user.twitter.tokenSecret = tokenSecret;
+					// add twitter suggested following to userSchema
+					user.suggestedFollowing = suggestedTwFollowing;
+					console.log('YAY', user);
+					return user.saveAsync()
+				}, function(err){
+					console.log('err: ', err)
+				})
+				.then(function(user){
+						done(user);
+				}, function(err){
+					console.log('ERROR: ', err)
+					done(err); 
 				});
 			}
 		});
 	}));
-
 	return passport;
 };
+
+function getTwitterFollowing(twitterHandle, oauth) {
+	return new Promise(function(resolve, reject) {
+		// currently only getting the first 200 users, either use twitterId (5000) or cursor to next
+		var url = "https://api.twitter.com/1.1/friends/list.json?";
+		var params = { 
+		  screen_name: twitterHandle,
+		  cursor: -1,
+		  count: 200,
+		}
+
+		url += qs.stringify(params)
+		request.get({url:url, oauth:oauth, json:true}, function (e, r, result) {
+		  var twitterFriends = result.users
+		  var friendsArr = []
+		  for (var i = 0; i < twitterFriends.length; i++) {
+		  	// twitter names are all saved lower case because this is how they are extracted from 
+		  	friendsArr.push(twitterFriends[i].screen_name.toLowerCase());
+		  } 
+		  console.log('TWITTER:',friendsArr);
+		  // User.find({twitter: {username: { $in: friendsArr}}}, function(err, users){
+		  // 	console.log(users);
+		  // });
+		  // User.find({'twitter.username': { $in: friendsArr}}).select('-').exec(function(err, users){
+		  // 	console.log('USERS:',users);
+		  // });
+		  return User.find({'twitter.username': { $in: friendsArr}}).exec()
+		  .then(function(users){
+		  	// users = array of [hnName, twitterHandle]
+		  	users = users.map(function(user){
+		  		return [user.id, user.twitter.username];
+		  	});
+		  	console.log('USERS:',users);
+		  	resolve(users);
+		  });
+		});
+	});
+}
+
+
+
+
+
