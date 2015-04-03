@@ -22,16 +22,14 @@ exports.setup = function (User) {
 
 	// passport syntax for implementing a strategy
 	passport.use('twitter-authz', new TwitterStrategy({
-		// we need our app's "username"
 		consumerKey: config.twitter.consumerKey,
-		// and our app's "password"
 		consumerSecret: config.twitter.consumerSecret,
 		callbackUrl: config.twitter.callbackUrl,
 		passReqToCallback: true
 	}, function (req, token, tokenSecret, profile, done) {
 		// try to replace with req.user
-		var hnUserId = req.cookies.hn;
-		console.log('cookie: ',profile);
+		var hnUserId = req.user;
+		console.log('hnUserId: ',hnUserId);
 		// when the twitter data comes back
 		// we'll always call `done` so that passport knows
 		// to go on, and what user data to serialize

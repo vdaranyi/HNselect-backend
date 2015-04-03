@@ -89,30 +89,32 @@ router.post('/:user/bookmark/:storyid', function(req, res, next){
         }
     });
 });
-/*
+
 // if the user requests a login through twitter
 // execute passport's twitter strategy
-router.get('/:hn/connect/twitter', 
-  function(req,res,next) {
-    res.cookie('hn',req.params.hn);
-    next();
-  },
+router.get('/:hn/twitter/connect', 
+  // function(req,res,next) {
+  //   // do we need a cookie here, should be doable with req.user
+  //   res.cookie('hn',req.params.hn);
+  //   // next();
+  // },
   passport.authorize('twitter-authz', {failureRedirect: '/account' }));
   
 // if twitter sends us an authenticated user
 // execute passport's twitter strategy
 // afterwards, redirect to root
-router.get('/connect/twitter/callback', 
-  passport.authorize('twitter-authz', {failureRedirect: '/account' }), 
-  getFollowing()
+router.get('/twitter/connected', 
+  passport.authorize('twitter-authz', {successRedirect: '/twitterlogin.html',
+                                        failureRedirect: '/account' }), 
+  // getFollowing()
   function (req, res) {
     var user = req.user;
     var account = req.account;
     console.log(account);
+    res.redirect('/twitterlogin.html');
+  }
+);
 
-  res.redirect('/');
-});
-*/
 
 /*
 function getFollowing(hnUser) {
