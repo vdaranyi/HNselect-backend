@@ -59,7 +59,7 @@ exports.setup = function (User) {
 					user.twitter.tokenSecret = tokenSecret;
 					// add twitter suggested following to userSchema
 					user.suggestedFollowing = suggestedTwFollowing;
-					console.log(user);
+					console.log('USER',user, suggestedFollowing, twProfile.username);
 					return user.saveAsync()
 				}, function(err){
 					console.log('err: ', err)
@@ -97,7 +97,7 @@ function getTwitterFollowing(twitterHandle, oauth) {
 		  	// twitter names are all saved lower case because this is how they are extracted from 
 		  	friendsArr.push(twitterFriends[i].screen_name.toLowerCase());
 		  } 
-		  // console.log('TWITTER:',friendsArr);
+		  console.log('TWITTER:',friendsArr);
 		  // User.find({twitter: {username: { $in: friendsArr}}}, function(err, users){
 		  // 	console.log(users);
 		  // });
