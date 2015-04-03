@@ -16,7 +16,7 @@ var userSchema = new mongoose.Schema({
     photo: String
   },
   loggedin: Boolean
-});
+}, {strict: false}); // dev only
 
 userSchema
   .virtual('twitterClient')
