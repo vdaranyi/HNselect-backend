@@ -3,7 +3,7 @@ var mongoose = require('mongoose');
 
 var itemSchema = new mongoose.Schema({
   // Not saving all fields
-  createdAt: { type: Date, expires: '7d', default: Date.now}, // Data expires after 3 days
+  createdAt: { type: Date, expires: '30d', default: Date.now}, // Data expires after 3 days
   by: {type: String, index: true}, // author
   id: {type: Number, index: true, unique: true}, // item no
   time: Number, // unix timestamp

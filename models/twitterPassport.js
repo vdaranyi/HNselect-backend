@@ -36,7 +36,7 @@ exports.setup = function (User) {
 	}, function (req, token, tokenSecret, twProfile, done) {
 		// try to replace with req.user
 		var hnUserId = req.cookies.user;
-		console.log(hnUserId);
+		// console.log(hnUserId);
 		// find an existing user from the database
 		User.findOne({id: hnUserId}, function (err, user) {
 			if (err) done(err);
@@ -81,35 +81,43 @@ function getTwitterFollowing(twitterHandle, oauth) {
 		var url = "https://api.twitter.com/1.1/friends/list.json?";
 		var params = { 
 		  screen_name: twitterHandle,
-		  cursor: -1,
-		  count: 200,
+		  count: 200
+		}
+		url += qs.stringify(params)
+		var cursor = -1; // first result page
+
+		// iterating over all result pages
+		do {
+			urlWithCursor = url + "&cursor" + cursor;
+			make
 		}
 
-		url += qs.stringify(params)
-		request.get({url:url, oauth:oauth, json:true}, function (e, r, result) {
-		  var twitterFriends = result.users
-		  var friendsArr = []
-		  for (var i = 0; i < twitterFriends.length; i++) {
-		  	// twitter names are all saved lower case because this is how they are extracted from 
-		  	friendsArr.push(twitterFriends[i].screen_name.toLowerCase());
-		  } 
-		  console.log('TWITTER:',friendsArr);
-		  // User.find({twitter: {username: { $in: friendsArr}}}, function(err, users){
-		  // 	console.log(users);
-		  // });
-		  // User.find({'twitter.username': { $in: friendsArr}}).select('-').exec(function(err, users){
-		  // 	console.log('USERS:',users);
-		  // });
-		  return User.find({'twitter.username': { $in: friendsArr}}).exec()
-		  .then(function(users){
-		  	// users = array of [hnName, twitterHandle]
-		  	users = users.map(function(user){
-		  		return [user.id, user.twitter.username];
-		  	});
-		  	console.log('USERS:',users);
-		  	resolve(users);
-		  });
-		});
+		function makeFriendsPageRequest(pageUrl)
+			request.get({url:url, oauth:oauth, json:true}, function (e, r, result) {
+			  var twitterFriends = result.users
+			  var friendsArr = []
+			  for (var i = 0; i < twitterFriends.length; i++) {
+			  	// twitter names are all saved lower case because this is how they are extracted from 
+			  	friendsArr.push(twitterFriends[i].screen_name.toLowerCase());
+			  } 
+			  // console.log('TWITTER:',friendsArr);
+			  // User.find({twitter: {username: { $in: friendsArr}}}, function(err, users){
+			  // 	console.log(users);
+			  // });
+			  // User.find({'twitter.username': { $in: friendsArr}}).select('-').exec(function(err, users){
+			  // 	console.log('USERS:',users);
+			  // });
+			  return User.find({'twitter.username': { $in: friendsArr}}).exec()
+			  .then(function(users){
+			  	// users = array of [hnName, twitterHandle]
+			  	users = users.map(function(user){
+			  		return [user.id, user.twitter.username];
+			  	});
+			  	console.log('twitter - hn friends:',users);
+			  	resolve(users);
+			  });
+			});
+		}
 	});
 }
 

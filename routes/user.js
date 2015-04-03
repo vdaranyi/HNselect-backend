@@ -132,7 +132,6 @@ router.get('/:user/twitter/connect',
 
  router.get('/twitter/connected', 
    function(req,res,next) {
-    console.log('ffff')
     next()
    },
    passport.authorize('twitter-authz'), 
@@ -140,7 +139,7 @@ router.get('/:user/twitter/connect',
    function (req, res) {
      var user = req.user;
      var account = req.account;
-     console.log('ACCT',account);
+     // console.log('ACCT',account);
      res.redirect('/twitterlogin.html');
    }
  );

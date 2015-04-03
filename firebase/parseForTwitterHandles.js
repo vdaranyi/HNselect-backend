@@ -1,4 +1,4 @@
-var Firebase = require('firebase'),
+  var Firebase = require('firebase'),
     request = require('request'),
     mongoose = require('mongoose'),
     async = require('async'),
@@ -37,6 +37,10 @@ function parseForTwitter() {
                 temp = temp.concat(about.match(/twitter\/(\w+)/g));
               if (about.match(/twitter.com\/(\w+)/g))
                 temp = temp.concat(about.match(/twitter.com\/(\w+)/g));
+              // make everything lowerCase
+              temp.map(function(value){
+                return value.toLowerCase();
+              });
               if (temp.length && temp[0]) {
                 cleanUpHandle(userId, temp);
               }

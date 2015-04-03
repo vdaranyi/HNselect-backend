@@ -16,7 +16,7 @@
     "express-session": "^1.10.4",
     "firebase": "^2.2.2",
     "lodash": "^3.6.0",
-    "mongoose": "^3.8.24",
+    "mongoose": "^3.9.7",
     "morgan": "~1.5.1",
     "open-graph": "^0.1.5",
     "passport": "^0.2.1",
