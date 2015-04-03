@@ -12,7 +12,8 @@ var userSchema = new mongoose.Schema({
   	token: String,
   	tokenSecret: String,
   	id: String,
-  	username: String
+  	username: String,
+    photo: String
   },
   loggedin: Boolean
 });

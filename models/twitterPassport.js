@@ -24,19 +24,21 @@ exports.setup = function (User) {
 	passport.use('twitter-authz', new TwitterStrategy({
 		consumerKey: config.twitter.consumerKey,
 		consumerSecret: config.twitter.consumerSecret,
-		callbackUrl: config.twitter.callbackUrl,
+		callbackURL: config.twitter.callbackUrl,
 		passReqToCallback: true
 	}, function (req, token, tokenSecret, profile, done) {
 		// try to replace with req.user
-		var hnUserId = req.user;
-		console.log('hnUserId: ',hnUserId);
+		var hnUserId = req.cookies.user;
+
+		// console.log('hnUserId: ',hnUserId);
 		// when the twitter data comes back
 		// we'll always call `done` so that passport knows
 		// to go on, and what user data to serialize
 		User.findOne({id: hnUserId}, function (err, user) {
+			console.log('Hello:',profile);
 			if (err) done(err);
 			// find an existing user from the database
-			else if (user.twitter.username) done(null, user);
+			if (user.twitter.username) done(null, user);
 			else {
 				// adjust userSchema!
 				user.twitter.username = profile.username;

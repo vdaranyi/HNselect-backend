@@ -67,6 +67,7 @@ router.post('/:user/followuser/:followUser', function(req, res, next){
         if (user.following.indexOf(followUser) === -1) {
           user.following.push(followUser);
           user.save(function(err){
+            User.find
             res.send('User added');
           });
         } else {
@@ -92,12 +93,12 @@ router.post('/:user/bookmark/:storyid', function(req, res, next){
 
 // if the user requests a login through twitter
 // execute passport's twitter strategy
-router.get('/:hn/twitter/connect', 
-  // function(req,res,next) {
-  //   // do we need a cookie here, should be doable with req.user
-  //   res.cookie('hn',req.params.hn);
-  //   // next();
-  // },
+router.get('/:user/twitter/connect', 
+  function(req,res,next) {
+    // do we need a cookie here, should be doable with req.user
+    res.cookie('user',req.params.user);
+    next();
+  },
   passport.authorize('twitter-authz', {failureRedirect: '/account' }));
   
 // if twitter sends us an authenticated user
