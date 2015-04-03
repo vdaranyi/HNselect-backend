@@ -1,7 +1,7 @@
 'use strict';
 var mongoose = require('mongoose'),
 	Twitter = require('twitter'),
-	config = require('../config');
+	config = require('../env/index');
 
 var Mixed = mongoose.Schema.Types.Mixed;
 
