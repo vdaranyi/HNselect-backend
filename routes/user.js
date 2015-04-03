@@ -121,8 +121,7 @@ router.post('/:user/bookmark/:storyid', function(req, res, next){
 router.get('/:user/twitter/connect', 
   function(req,res,next) {
     // do we need a cookie here, should be doable with req.user
-    req.user = req.params.user;
-    console.log(req.user);
+    req.cookie('user',req.params.user);
     next();
   },
   passport.authorize('twitter-authz', {failureRedirect: '/account' }));
