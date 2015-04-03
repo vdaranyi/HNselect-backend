@@ -35,8 +35,7 @@ exports.setup = function (User) {
 		passReqToCallback: true
 	}, function (req, token, tokenSecret, twProfile, done) {
 		// try to replace with req.user
-		var hnUserId = req.user;
-		console.log('Yay, hnUserId');
+		var hnUserId = req.cookies.user;
 		// find an existing user from the database
 		User.findOne({id: hnUserId}, function (err, user) {
 			console.log(user);
