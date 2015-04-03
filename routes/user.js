@@ -121,7 +121,8 @@ router.post('/:user/bookmark/:storyid', function(req, res, next){
 router.get('/:user/twitter/connect', 
   function(req,res,next) {
     // do we need a cookie here, should be doable with req.user
-    res.cookie('user',req.params.user);
+    req.user = req.params.user;
+    console.log(req.user);
     next();
   },
   passport.authorize('twitter-authz', {failureRedirect: '/account' }));
@@ -132,12 +133,10 @@ router.get('/:user/twitter/connect',
 router.get('/twitter/connected', 
   passport.authorize('twitter-authz', {successRedirect: '/twitterlogin.html',
                                         failureRedirect: '/account' }), 
-  // getFollowing()
   function (req, res) {
     var user = req.user;
     var account = req.account;
-    console.log(account);
-    res.redirect('/twitterlogin.html');
+    res.send('/twitterlogin.html');
   }
 );
 

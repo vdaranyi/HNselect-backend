@@ -35,10 +35,11 @@ exports.setup = function (User) {
 		passReqToCallback: true
 	}, function (req, token, tokenSecret, twProfile, done) {
 		// try to replace with req.user
-		var hnUserId = req.cookies.user;
-		console.log(req.user);
+		var hnUserId = req.user;
+		console.log('Yay, hnUserId');
 		// find an existing user from the database
 		User.findOne({id: hnUserId}, function (err, user) {
+			console.log(user);
 			if (err) done(err);
 			if (false) { // TO REVIEW LOGIC user.twitter.token
 				done(null, user);
@@ -59,7 +60,6 @@ exports.setup = function (User) {
 					user.twitter.tokenSecret = tokenSecret;
 					// add twitter suggested following to userSchema
 					user.suggestedFollowing = suggestedTwFollowing;
-					console.log('YAY', user);
 					return user.saveAsync()
 				}, function(err){
 					console.log('err: ', err)
