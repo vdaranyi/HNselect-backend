@@ -75,6 +75,23 @@ router.post('/:user/followuser/:followUser', function(req, res, next){
     });
 });
 
+router.delete('/:user/unfollowuser', function(req, res, next){
+    var user = req.user,
+        unfollowUser = req.body;
+    User.findById(user).exec(function(err, user) {
+        for (var i=0; i<unfollowUser.length; i++) {
+            var followingIndex = user.following.indexOf(unfollowUser[i]);
+            if (followingIndex !== -1) {
+                user.following.splice(followingIndex, 1);
+
+            }
+        }
+        user.save(function (err) {
+            res.send('User unfollowed');
+        });
+    });
+});
+
 router.post('/:user/bookmark/:storyid', function(req, res, next){
     var user = req.user,
         storyId = req.params.storyid;
