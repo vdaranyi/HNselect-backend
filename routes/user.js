@@ -131,13 +131,7 @@ router.get('/:user/twitter/connect',
 // afterwards, redirect to root
 router.get('/twitter/connected', 
   passport.authorize('twitter-authz', {successRedirect: '/twitterlogin.html',
-                                        failureRedirect: '/account' }), 
-  function (req, res) {
-    var user = req.user;
-    var account = req.account;
-    res.send('/twitterlogin.html');
-  }
-);
+                                        failureRedirect: '/account' }));
 
 
 /*
