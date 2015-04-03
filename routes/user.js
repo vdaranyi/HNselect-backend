@@ -129,9 +129,21 @@ router.get('/:user/twitter/connect',
 // if twitter sends us an authenticated user
 // execute passport's twitter strategy
 // afterwards, redirect to root
-router.get('/twitter/connected', 
-  passport.authorize('twitter-authz', {successRedirect: '/twitterlogin.html',
-                                        failureRedirect: '/account' }));
+
+ router.get('/twitter/connected', 
+   function(req,res,next) {
+    console.log('ffff')
+    next()
+   },
+   passport.authorize('twitter-authz'), 
+   // getFollowing()
+   function (req, res) {
+     var user = req.user;
+     var account = req.account;
+     console.log('ACCT',account);
+     res.redirect('/twitterlogin.html');
+   }
+ );
 
 
 /*

@@ -36,9 +36,9 @@ exports.setup = function (User) {
 	}, function (req, token, tokenSecret, twProfile, done) {
 		// try to replace with req.user
 		var hnUserId = req.cookies.user;
+		console.log(hnUserId);
 		// find an existing user from the database
 		User.findOne({id: hnUserId}, function (err, user) {
-			console.log(user);
 			if (err) done(err);
 			if (false) { // TO REVIEW LOGIC user.twitter.token
 				done(null, user);
@@ -64,7 +64,7 @@ exports.setup = function (User) {
 					console.log('err: ', err)
 				})
 				.then(function(user){
-						done(user);
+						done(null, user);
 				}, function(err){
 					console.log('ERROR: ', err)
 					done(err); 
