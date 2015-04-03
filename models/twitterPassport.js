@@ -59,6 +59,7 @@ exports.setup = function (User) {
 					user.twitter.tokenSecret = tokenSecret;
 					// add twitter suggested following to userSchema
 					user.suggestedFollowing = suggestedTwFollowing;
+					console.log(user);
 					return user.saveAsync()
 				}, function(err){
 					console.log('err: ', err)
