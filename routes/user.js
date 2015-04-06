@@ -104,24 +104,14 @@ router.delete('/:user/unfollowuser', function(req, res, next){
 router.post('/:user/bookmark/:storyid', function(req, res, next){
     var user = req.user,
         storyId = req.params.storyid;
-    User.find({id: user}).exec(function(err, user) {
-        if ('bookmarks' in user) {
-          if (user.bookmarks.indexOf(storyId) === -1) {
-            user.bookmarks.push(storyId);
-            user.save(function(err){
-              res.send('Story added');
-            });
-          } else {
-            res.send('Already bookmarked story');
-          }
-        } else {
-          user.bookmarks = []
-          user.bookmarks.push(storyId);
-          user.save(function(err){
-            res.send('Story added');
-          });
-        }
-    });
+    if (user.bookmarks.indexOf(storyId) === -1) {
+      user.update({ $push: { bookmarks: storyId }}, function(err) {
+        if (err) console.log('bookmark update failed: ', err);
+        res.send('Story added');
+      });
+    } else {
+      res.send('Already bookmarked story');
+    }
 });
 
 // if the user requests a login through twitter
