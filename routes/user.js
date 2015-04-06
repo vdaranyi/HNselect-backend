@@ -105,13 +105,21 @@ router.post('/:user/bookmark/:storyid', function(req, res, next){
     var user = req.user,
         storyId = req.params.storyid;
     User.find({id: user}).exec(function(err, user) {
-        if (user.bookmarks.indexOf(storyId) === -1) {
+        if ('bookmarks' in user) {
+          if (user.bookmarks.indexOf(storyId) === -1) {
+            user.bookmarks.push(storyId);
+            user.save(function(err){
+              res.send('Story added');
+            });
+          } else {
+            res.send('Already bookmarked story');
+          }
+        } else {
+          user.bookmarks = []
           user.bookmarks.push(storyId);
           user.save(function(err){
             res.send('Story added');
           });
-        } else {
-          res.send('Already bookmarked story');
         }
     });
 });

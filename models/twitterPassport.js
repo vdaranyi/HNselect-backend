@@ -88,8 +88,16 @@ function getTwitterFollowing(twitterHandle, oauth) {
 		var cursor = -1; // first result page
 
 		// iterating over all result pages / TO DO
-		urlWithCursor = url + "&cursor" + cursor;
-			
+		urlWithCursor = url + "&cursor=" + cursor;
+		
+		// do {
+		//     url_with_cursor = url + "&cursor=" + cursor;     
+		//     response_dictionary = perform_http_get_request_for_url( url_with_cursor );
+		//     cursor = response_dictionary[ 'next_cursor' ];
+		// }
+		// while ( cursor != 0 ) 
+
+		// function perform_http_get_request_for_url(urlWithCursor)
 		request.get({url:urlWithCursor, oauth:oauth, json:true}, function (e, r, result) {
 		  var twitterFriends = result.users
 		  var friendsArr = []
