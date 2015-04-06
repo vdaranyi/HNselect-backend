@@ -1,7 +1,8 @@
 'use strict';
 var mongoose = require('mongoose'),
 	Twitter = require('twitter'),
-	config = require('../env/index');
+	config = require('../env/index'),
+  Item = require('./itemSchema');
 
 var Mixed = mongoose.Schema.Types.Mixed;
 
@@ -9,7 +10,7 @@ var userSchema = new mongoose.Schema({
   id: {type: String, index: true, required: true, unique: true},
   submitted: [Number],
   following: [String],
-  bookmarks: [Number],
+  bookmarks: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Item' }],
   twitter: {
   	token: String,
   	tokenSecret: String,

@@ -6,8 +6,9 @@ passport = require('passport')
 
 router.param('user', function(req, res, next){
   var username = req.params.user;
-  User.findOne({id: username}, function(err, user){
+  User.findOne({id: username}).exec(function(err, user){
     if (!user) {
+      console.log(user);
       // move standard following into a variable or backend functionality
       User.create({id: username, following: ['tptacek','patio11','jacquesm','ColinWright','edw519','fogus','tokenadult','danso','shawndumas','jgrahamc']}, function(err, user){
         req.user = user;
@@ -37,9 +38,10 @@ router.get('/:user/newsfeed', function(req, res, next){
 
 router.get('/:user/bookmarks', function(req, res, next){
   var user = req.user;
-    var bookmarks = user.bookmarks;
-    console.log(bookmarks);
-    res.send(bookmarks);
+  User.findById(user).populate('bookmarks').exec(function(err, user){
+    if (err) console.log('Could not retrieve bookmarks. ', err);
+    res.send(user.bookmarks);
+  });
 });
 
 
@@ -103,15 +105,23 @@ router.delete('/:user/unfollowuser', function(req, res, next){
 
 router.post('/:user/bookmark/:storyid', function(req, res, next){
     var user = req.user,
-        storyId = req.params.storyid;
-    if (user.bookmarks.indexOf(storyId) === -1) {
-      user.update({ $push: { bookmarks: storyId }}, function(err) {
-        if (err) console.log('bookmark update failed: ', err);
-        res.send('Story added');
+        storyId = Number(req.params.storyid);
+    Item.findOne({id: storyId}, function (err, story){
+      if (err) console.log('could not find story in DB');
+      console.log(story._id, user);
+      var alreadyBookmarked = user.bookmarks.some(function(bookmark){
+        return bookmark.equals(story._id)
       });
-    } else {
-      res.send('Already bookmarked story');
-    }
+      if (!alreadyBookmarked) {
+        user.update({ $push: { bookmarks: story._id }}, function(err, user) {
+          console.log('USER',user);
+          if (err) console.log('bookmark update failed: ', err);
+          res.send('Story added');
+        });
+      } else {
+        res.send('Story already bookmarked');
+      }
+    });
 });
 
 // if the user requests a login through twitter
