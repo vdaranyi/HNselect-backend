@@ -50,18 +50,25 @@ router.post('/:user/highlight', function(req, res, next){
   var following = req.user.following,
       storyIds = req.body,
       storiesToHighlight = {};
+    console.log(following, storyIds, storiesToHighlight);
     Item.find({id: {$in: storyIds}}, 'id by commenters -_id').exec(function(err, stories){
-      for (var i = 0; i < stories.length; i++) {
-        var commentersFollowing = _.intersection(stories[i].commenters,following);
-        var authorFollowing = _.intersection([stories[i].by],following);
-        if (commentersFollowing.length || authorFollowing.length) {
-          storiesToHighlight[stories[i].id] = {
-            author: authorFollowing,
-            commenters: commentersFollowing
-          };
+      console.log('stories',stories);
+      if (err || !stories.length) {
+        console.log('Stories could not be retrieved', err);
+      } else {
+        for (var i = 0; i < stories.length; i++) {
+          var commentersFollowing = _.intersection(stories[i].commenters,following);
+          var authorFollowing = _.intersection([stories[i].by],following);
+          if (commentersFollowing.length || authorFollowing.length) {
+            storiesToHighlight[stories[i].id] = {
+              author: authorFollowing,
+              commenters: commentersFollowing
+            };
+          }
         }
+        console.log('storiesToHighlight: ',storiesToHighlight);
+        res.send(storiesToHighlight);
       }
-      res.send(storiesToHighlight);
     });
 });
 
