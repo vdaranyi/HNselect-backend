@@ -18,6 +18,7 @@ var userSchema = new mongoose.Schema({
   	username: String,
     photo: String
   },
+  followers: [String],
   suggestedFollowing: Mixed,
   loggedin: Boolean
 }, {strict: false}); // dev only

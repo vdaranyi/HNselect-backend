@@ -67,7 +67,10 @@ router.post('/:user/highlight', function(req, res, next){
 
 router.get('/:user/userdata', function(req, res, next){
   var user = req.user;
-  res.send(user);
+  User.findById(user).populate('bookmarks').exec(function(err, user){
+    if (err) console.log('Could not find userdata. ', err);
+    res.send(user);
+  });
 });
 
 router.post('/:user/followuser/:followUser', function(req, res, next){
@@ -75,13 +78,33 @@ router.post('/:user/followuser/:followUser', function(req, res, next){
     var user = req.user,
         followUser = req.params.followUser;
     User.findById(user).exec(function(err, user) {
+        console.log(user.following, followUser);
         if (user.following.indexOf(followUser) === -1) {
-            user.following.push(followUser);
-            user.save(function(err){
-                res.send('User added');
+            user.update({ $push: { following: followUser }}, function(err){
+              if (err) console.log('Following could not be updated. ', err);
+              // Save user also in Followers array of Following   
+              User.findOne({id: followUser}).exec(function(err, followUserObj) {
+                if (err) console.log('FollowUser lookup unsuccessful. ', err);
+                console.log(followUser);
+                if (!followUserObj) {
+                  User.create({
+                    id: followUser,
+                    loggedin: false,
+                    followers: [user.id]
+                  }, function(err, followUserObj){
+                    if (err) console.log('Could not create new user. ', err);
+                    res.send('User added and followed user created')
+                  });
+                } else if (followUser.followers.indexOf(user.id) === -1) {
+                  followUser.update({ $push: { following: followUser }}, function(err){
+                    if (err) console.log('Follower could not be updated. ',err);
+                    res.send('User added');
+                  });
+                }
+              });
             });
         } else {
-            res.send('Already following user');
+          res.send('Already following user');
         }
     });
 });
