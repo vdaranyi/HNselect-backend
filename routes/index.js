@@ -5,7 +5,7 @@ var router = require('express').Router(),
 	Item = require('../models/itemSchema');
 
 router.get('/', function(req, res, next) {
-  res.send('Thanks for using Hacker News Select!');
+  res.render('../public/index.html');
 });
 
 module.exports = router;
