@@ -1,14 +1,27 @@
 body {
 	background-color: #ff6600;
-	font: 16px Arial;
+	font: 16px Lato, sans-serif;
 	color: #333;
+}
+
+h1 {
+    font-size: 144px;
+    font-weight: 100;
+    margin: 0px;
+}
+
+h2 {
+    text-align: center;
+    font-size: 48px;
+    margin-top: 0px;
+    margin-bottom: 20px;
 }
 
 .titlediv {
 	margin: 0 auto;
     color: #ffffff;
     position: absolute;
-    top: 40%;
+    top: 25%;
     width: 100%;
 }
 
