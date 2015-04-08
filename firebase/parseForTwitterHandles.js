@@ -12,6 +12,7 @@ Promise.promisifyAll(mongoose); // adds 'Async' methods to mongoose that make mo
 var Item = require('../models/itemSchema');
 var User = require('../models/userSchema');
 var twitter = {};
+var count = 0;
 
 // Parse for twitter handles
 function parseForTwitter() {
@@ -38,11 +39,12 @@ function parseForTwitter() {
               if (about.match(/twitter.com\/(\w+)/g))
                 temp = temp.concat(about.match(/twitter.com\/(\w+)/g));
               // make everything lowerCase
-              temp.map(function(value){
-                return value.toLowerCase();
-              });
               if (temp.length && temp[0]) {
-                cleanUpHandle(userId, temp);
+                count++;
+                temp.map(function(value){
+                  return value.toLowerCase();
+                });
+                cleanUpHandle(count, userId, temp);
               }
             }
           });
@@ -57,7 +59,7 @@ function parseForTwitter() {
 }
 
 // Goes throuhgh the array fo potential handles (temp), cleanes handles up, removes duplicates and saves as string
-function cleanUpHandle(hnUser, temp) {
+function cleanUpHandle(count, hnUser, temp) {
   var i = 0;
   while (i < temp.length) {
     temp[i] = temp[i].replace('twitter.com\/','').replace('twitter\/','').replace(' @','').replace('>@','').replace('(@','').replace('@','');
@@ -70,7 +72,7 @@ function cleanUpHandle(hnUser, temp) {
   if (temp.length) {
     temp = temp.join(', ')
     addTwitterHandleToDB(hnUser, temp);
-    console.log(hnUser, '*', temp, '*');
+    console.log(count, '*', hnUser, '*', temp, '*');
   }
 }
 
